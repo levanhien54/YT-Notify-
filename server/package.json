@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "vitest run",
-    "start": "node src/index.js"
+    "dev": "node src/index.js",
+    "start": "node src/index.js",
+    "test": "vitest run"
   },
   "dependencies": {
     "better-sqlite3": "^11.3.0",
