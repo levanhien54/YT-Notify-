@@ -55,3 +55,16 @@ export function getChannel(db, channelId) {
 export function listChannels(db) {
   return db.prepare('SELECT * FROM channels ORDER BY created_at ASC').all();
 }
+
+export function listActiveChannels(db) {
+  return db.prepare('SELECT * FROM channels WHERE active = 1 ORDER BY created_at ASC').all();
+}
+
+export function setChannelActive(db, channelId, active) {
+  db.prepare('UPDATE channels SET active = ? WHERE channel_id = ?')
+    .run(active ? 1 : 0, channelId);
+}
+
+export function removeChannel(db, channelId) {
+  db.prepare('DELETE FROM channels WHERE channel_id = ?').run(channelId);
+}
