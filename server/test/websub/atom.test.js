@@ -37,10 +37,11 @@ describe('parseAtom', () => {
     });
   });
 
-  it('parses an at:deleted-entry into entries[] with isDeleted: true', () => {
+  it('parses an at:deleted-entry into deleted[] with isDeleted: true', () => {
     const res = parseAtom(DELETED_ENTRY);
-    expect(res.entries).toHaveLength(1);
-    expect(res.entries[0]).toEqual({
+    expect(res.entries).toHaveLength(0);
+    expect(res.deleted).toHaveLength(1);
+    expect(res.deleted[0]).toEqual({
       videoId: 'VIDDEL',
       channelId: null,
       title: null,
@@ -51,9 +52,9 @@ describe('parseAtom', () => {
     });
   });
 
-  it('returns empty entries array for an empty/invalid feed', () => {
+  it('returns empty entries and deleted arrays for an empty/invalid feed', () => {
     expect(parseAtom('<feed xmlns="http://www.w3.org/2005/Atom"></feed>'))
-      .toEqual({ entries: [] });
-    expect(parseAtom('')).toEqual({ entries: [] });
+      .toEqual({ entries: [], deleted: [] });
+    expect(parseAtom('')).toEqual({ entries: [], deleted: [] });
   });
 });

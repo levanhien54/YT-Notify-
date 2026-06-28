@@ -24,12 +24,12 @@ function videoIdFromRef(ref) {
 }
 
 export function parseAtom(xml) {
-  if (!xml || !xml.trim()) return { entries: [] };
+  if (!xml || !xml.trim()) return { entries: [], deleted: [] };
   let doc;
   try {
     doc = parser.parse(xml);
   } catch {
-    return { entries: [] };
+    return { entries: [], deleted: [] };
   }
   const feed = doc && doc.feed ? doc.feed : {};
 
@@ -53,5 +53,5 @@ export function parseAtom(xml) {
     isDeleted: true,
   }));
 
-  return { entries: entries.concat(deleted) };
+  return { entries, deleted };
 }
