@@ -29,6 +29,23 @@ function mapChannel(row) {
   };
 }
 
+function mapVideo(row) {
+  if (!row) return row;
+  return {
+    videoId: row.video_id,
+    channelId: row.channel_id,
+    title: row.title,
+    publishedAt: row.published_at,
+    updatedAt: row.updated_at,
+    thumbnailUrl: row.thumbnail_url,
+    status: row.status,
+    downloadPath: row.download_path,
+    retries: row.retries,
+    error: row.error,
+    createdAt: row.created_at,
+  };
+}
+
 export function registerMgmtRoutes(app, { db, tunnel, queue, deps }) {
   const genSecret = deps.genSecret || (() => randomBytes(16).toString('hex'));
   const callbackFor = () => {
@@ -144,5 +161,12 @@ export function registerMgmtRoutes(app, { db, tunnel, queue, deps }) {
     } catch (err) {
       next(err);
     }
+  });
+
+  app.get('/api/videos', (req, res) => {
+    const raw = req.query.limit;
+    const parsed = raw === undefined ? NaN : Number.parseInt(raw, 10);
+    const limit = Number.isFinite(parsed) && parsed > 0 ? parsed : 50;
+    res.json(listVideos(db, { limit }).map(mapVideo));
   });
 }
