@@ -14,10 +14,11 @@
     "better-sqlite3": "^11.3.0",
     "express": "^4.19.2",
     "fast-xml-parser": "^4.4.1",
+    "ffmpeg-static": "^5.3.0",
     "socket.io": "^4.7.5"
   },
   "devDependencies": {
-    "electron": "^31.0.0",
+    "electron": "^31.7.7",
     "electron-builder": "^24.13.3"
   },
   "build": {
@@ -39,7 +40,9 @@
       "client/dist/**/*"
     ],
     "win": {
-      "target": ["nsis"],
+      "target": [
+        "nsis"
+      ],
       "requestedExecutionLevel": "asInvoker"
     },
     "nsis": {
