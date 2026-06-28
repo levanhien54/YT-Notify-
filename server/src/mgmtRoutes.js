@@ -6,7 +6,10 @@ import {
   addChannel,
   setChannelActive,
   removeChannel,
+  getAllSettings,
+  setSetting,
 } from './db/index.js';
+import { DEFAULTS } from './config.js';
 
 function countDownloading(db) {
   const row = db.prepare("SELECT COUNT(*) AS n FROM videos WHERE status = 'downloading'").get();
@@ -168,5 +171,19 @@ export function registerMgmtRoutes(app, { db, tunnel, queue, deps }) {
     const parsed = raw === undefined ? NaN : Number.parseInt(raw, 10);
     const limit = Number.isFinite(parsed) && parsed > 0 ? parsed : 50;
     res.json(listVideos(db, { limit }).map(mapVideo));
+  });
+
+  const mergedSettings = () => ({ ...DEFAULTS, ...getAllSettings(db) });
+
+  app.get('/api/settings', (req, res) => {
+    res.json(mergedSettings());
+  });
+
+  app.patch('/api/settings', (req, res) => {
+    const body = req.body || {};
+    for (const [key, value] of Object.entries(body)) {
+      setSetting(db, key, value);
+    }
+    res.json(mergedSettings());
   });
 }
