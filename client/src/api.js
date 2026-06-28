@@ -53,6 +53,11 @@ export async function patchSettings(patch) {
   return res.json();
 }
 
+export async function refreshChannelsMeta() {
+  const res = await request('/api/channels/refresh-meta', { method: 'POST' });
+  return res.json();
+}
+
 export async function startTunnel() {
   await request('/api/tunnel/start', { method: 'POST' });
   return true;

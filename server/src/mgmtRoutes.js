@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { XMLParser } from 'fast-xml-parser';
 import {
   listChannels,
   listVideos,
@@ -6,10 +7,39 @@ import {
   addChannel,
   setChannelActive,
   removeChannel,
+  updateChannelMeta,
   getAllSettings,
   setSetting,
 } from './db/index.js';
 import { DEFAULTS } from './config.js';
+
+const _xmlParser = new XMLParser({ ignoreAttributes: false });
+
+// Fetch real channel title + thumbnail from YouTube RSS feed (no API key needed).
+async function fetchChannelMeta(channelId, fetchFn) {
+  try {
+    const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+    const res = await fetchFn(url);
+    if (!res.ok) return {};
+    const xml = await res.text();
+    const data = _xmlParser.parse(xml);
+    const feed = data?.feed;
+    return {
+      title: feed?.title ?? null,
+      thumbnail: feed?.['media:thumbnail']?.['@_url'] ?? null,
+    };
+  } catch {
+    return {};
+  }
+}
+
+// Extract @handle from a YouTube URL or raw input.
+function extractHandle(input) {
+  const m = input.match(/@([\w.-]+)/);
+  if (m) return '@' + m[1];
+  if (input.startsWith('@')) return input;
+  return null;
+}
 
 function countDownloading(db) {
   const row = db.prepare("SELECT COUNT(*) AS n FROM videos WHERE status = 'downloading'").get();
@@ -96,12 +126,14 @@ export function registerMgmtRoutes(app, { db, tunnel, queue, deps }) {
       if (getChannel(db, channelId)) {
         return res.status(409).json({ error: 'channel already exists' });
       }
+      // Fetch real channel name from YouTube RSS (graceful fallback)
+      const meta = await fetchChannelMeta(channelId, deps.fetchFn);
       const secret = genSecret();
       const channel = addChannel(db, {
         channelId,
-        handle: input,
-        title: input,
-        thumbnail: null,
+        handle: extractHandle(input) || channelId,
+        title: meta.title || extractHandle(input) || channelId,
+        thumbnail: meta.thumbnail || null,
         secret,
       });
       await deps.sendSubscription({
@@ -141,6 +173,22 @@ export function registerMgmtRoutes(app, { db, tunnel, queue, deps }) {
     } catch (err) {
       next(err);
     }
+  });
+
+  // Refresh channel titles/thumbnails from YouTube RSS for all stale channels.
+  app.post('/api/channels/refresh-meta', async (req, res) => {
+    const all = listChannels(db);
+    const stale = all.filter(
+      (c) => !c.title || c.title.startsWith('http') || c.title === c.channel_id
+    );
+    // Fire-and-forget; client polls /api/channels for updates
+    (async () => {
+      for (const ch of stale) {
+        const meta = await fetchChannelMeta(ch.channel_id, deps.fetchFn);
+        if (meta.title) updateChannelMeta(db, ch.channel_id, meta);
+      }
+    })().catch(() => {});
+    res.json({ refreshing: stale.length });
   });
 
   app.delete('/api/channels/:id', async (req, res, next) => {

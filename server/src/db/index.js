@@ -69,6 +69,11 @@ export function removeChannel(db, channelId) {
   db.prepare('DELETE FROM channels WHERE channel_id = ?').run(channelId);
 }
 
+export function updateChannelMeta(db, channelId, { title, thumbnail }) {
+  db.prepare('UPDATE channels SET title = ?, thumbnail = ? WHERE channel_id = ?')
+    .run(title ?? null, thumbnail ?? null, channelId);
+}
+
 export function updateChannelSubscription(db, channelId, { subscribedAt, leaseExpiresAt }) {
   db.prepare(`
     UPDATE channels SET subscribed_at = ?, lease_expires_at = ? WHERE channel_id = ?

@@ -43,6 +43,15 @@ export default function App() {
     refreshChannels();
     refreshVideos();
     api.getSettings().then(setSettings);
+    // Kick off background refresh of channel names for any stale entries,
+    // then re-poll until titles are resolved (max ~10 seconds).
+    api.refreshChannelsMeta().then(() => {
+      let tries = 0;
+      const poll = setInterval(() => {
+        refreshChannels();
+        if (++tries >= 5) clearInterval(poll);
+      }, 2000);
+    }).catch(() => {});
   }, [refreshChannels, refreshVideos]);
 
   const mergedVideos = useMemo(() => {
