@@ -10,7 +10,7 @@ export default function ChannelList({ channels, onToggle, onRemove }) {
         return (
           (c.title || '').toLowerCase().includes(q) ||
           (c.handle || '').toLowerCase().includes(q) ||
-          c.channel_id.toLowerCase().includes(q)
+          c.channelId.toLowerCase().includes(q)
         );
       })
     : channels;
@@ -43,7 +43,7 @@ export default function ChannelList({ channels, onToggle, onRemove }) {
             const isActive = !!c.active;
             return (
               <li
-                key={c.channel_id}
+                key={c.channelId}
                 className="group flex items-center gap-3 rounded-xl border border-white/5 bg-white/5 p-3 backdrop-blur-sm transition-all hover:border-white/10 hover:bg-white/10 hover:-translate-y-0.5 hover:shadow-lg"
               >
                 {c.thumbnail ? (
@@ -57,7 +57,7 @@ export default function ChannelList({ channels, onToggle, onRemove }) {
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-bold text-slate-100">
-                    {c.title || c.channel_id}
+                    {c.title || c.channelId}
                   </p>
                   {c.handle && (
                     <p className="truncate text-xs font-medium text-slate-400 mt-0.5">
@@ -68,8 +68,8 @@ export default function ChannelList({ channels, onToggle, onRemove }) {
                 <div className="flex items-center gap-1 opacity-60 transition-opacity group-hover:opacity-100 shrink-0">
                   <button
                     type="button"
-                    aria-label={`toggle ${c.channel_id}`}
-                    onClick={() => onToggle(c.channel_id, !isActive)}
+                    aria-label={`toggle ${c.channelId}`}
+                    onClick={() => onToggle(c.channelId, !isActive)}
                     className={`rounded-lg p-1.5 transition-all hover:scale-110 ${
                       isActive
                         ? 'text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 shadow-[0_0_10px_rgba(52,211,153,0.2)]'
@@ -80,8 +80,8 @@ export default function ChannelList({ channels, onToggle, onRemove }) {
                   </button>
                   <button
                     type="button"
-                    aria-label={`remove ${c.channel_id}`}
-                    onClick={() => onRemove(c.channel_id)}
+                    aria-label={`remove ${c.channelId}`}
+                    onClick={() => onRemove(c.channelId)}
                     className="rounded-lg p-1.5 text-rose-500/70 hover:text-rose-400 hover:bg-rose-500/10 transition-all hover:scale-110"
                   >
                     <Trash2 size={15} />
