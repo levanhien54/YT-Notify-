@@ -12,6 +12,7 @@ export class TunnelManager extends EventEmitter {
     this.status = 'offline';
     this.url = null;
     this._buf = '';
+    this._stopping = false;
   }
 
   getStatus() {
@@ -47,16 +48,26 @@ export class TunnelManager extends EventEmitter {
     }
   }
 
-  _onExit() {
+  _goOffline() {
     this.child = null;
     this.url = null;
     this._buf = '';
     this._setStatus('offline');
   }
 
+  _onExit() {
+    if (this._stopping) {
+      // stop() already transitioned to offline; just reset the flag.
+      this._stopping = false;
+      return;
+    }
+    this._goOffline();
+  }
+
   start() {
     if (this.child) return;
     this._buf = '';
+    this._stopping = false;
     this._setStatus('connecting');
     this.child = this.spawnFn('cloudflared', [
       'tunnel',
@@ -67,5 +78,15 @@ export class TunnelManager extends EventEmitter {
     if (this.child.stdout) this.child.stdout.on('data', onData);
     if (this.child.stderr) this.child.stderr.on('data', onData);
     this.child.on('exit', () => this._onExit());
+  }
+
+  stop() {
+    if (!this.child) return;
+    this._stopping = true;
+    const pid = this.child.pid;
+    if (pid != null) {
+      this.spawnFn('taskkill', ['/PID', String(pid), '/T', '/F']);
+    }
+    this._goOffline();
   }
 }
