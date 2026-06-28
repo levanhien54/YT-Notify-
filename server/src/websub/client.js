@@ -31,15 +31,20 @@ export async function resubscribeAll({
   const results = [];
   for (let i = 0; i < channels.length; i++) {
     const ch = channels[i];
-    const res = await sendFn({
-      hubUrl,
-      callbackUrl,
-      channelId: ch.channel_id,
-      mode: 'subscribe',
-      secret: ch.secret,
-      leaseSeconds,
-    });
-    results.push({ channelId: ch.channel_id, ...res });
+    try {
+      const res = await sendFn({
+        hubUrl,
+        callbackUrl,
+        channelId: ch.channel_id,
+        mode: 'subscribe',
+        secret: ch.secret,
+        leaseSeconds,
+      });
+      results.push({ channelId: ch.channel_id, ...res });
+    } catch (err) {
+      // Per-channel error: don't abort batch, record failure
+      results.push({ channelId: ch.channel_id, ok: false, status: 0 });
+    }
     if (delayMs > 0 && i < channels.length - 1) {
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }

@@ -62,4 +62,35 @@ describe('resubscribeAll', () => {
     expect(calls).toBe(2);
     vi.useRealTimers();
   });
+
+  it('catches per-channel errors and continues batch without aborting', async () => {
+    const db = seed();
+    const sendFn = vi.fn().mockImplementation(async ({ channelId }) => {
+      if (channelId === 'UC2') {
+        throw new Error('Network error');
+      }
+      return { ok: true, status: 202 };
+    });
+
+    const results = await resubscribeAll({
+      db,
+      callbackUrl: 'https://x.trycloudflare.com/webhook/youtube',
+      hubUrl: 'https://pubsubhubbub.appspot.com/subscribe',
+      leaseSeconds: 432000,
+      sendFn,
+      delayMs: 0,
+    });
+
+    // All channels attempted (2 active channels)
+    expect(sendFn).toHaveBeenCalledTimes(2);
+    expect(results).toHaveLength(2);
+
+    // UC1 succeeded
+    const uc1Result = results.find((r) => r.channelId === 'UC1');
+    expect(uc1Result).toEqual({ channelId: 'UC1', ok: true, status: 202 });
+
+    // UC2 failed but batch continued
+    const uc2Result = results.find((r) => r.channelId === 'UC2');
+    expect(uc2Result).toEqual({ channelId: 'UC2', ok: false, status: 0 });
+  });
 });
