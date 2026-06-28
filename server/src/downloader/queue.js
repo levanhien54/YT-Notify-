@@ -4,7 +4,7 @@ import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { buildYtdlpArgs } from './args.js';
 import { parseProgress } from './progress.js';
-import { updateVideoStatus } from '../db/index.js';
+import { updateVideoStatus, incrementRetries } from '../db/index.js';
 
 const DEST_RE = /^\[download\]\s+Destination:\s+(.+)\s*$/;
 const MERGER_RE = /^\[Merger\] Merging formats into "(.+)"\s*$/;
@@ -101,12 +101,21 @@ export class DownloadQueue extends EventEmitter {
     });
   }
 
-  // Task 4 (naive): any failure goes straight to 'failed' with no retry.
-  // Retry/backoff is added in Task 6.
   _handleFailure(job, error, finish) {
     const videoId = job.video.video_id;
-    updateVideoStatus(this.db, videoId, 'failed', { error });
-    this.emit('failed', { videoId, error });
-    finish();
+    const retries = incrementRetries(this.db, videoId);
+    if (retries <= this.maxRetries) {
+      const backoff = Math.min(1000 * 2 ** (retries - 1), 30000);
+      updateVideoStatus(this.db, videoId, 'queued', { error });
+      // Free the slot only after the backoff so the requeued job re-enters _pump.
+      setTimeout(() => {
+        this._queue.push({ video: job.video, attempt: retries });
+        finish();
+      }, backoff);
+    } else {
+      updateVideoStatus(this.db, videoId, 'failed', { error });
+      this.emit('failed', { videoId, error });
+      finish();
+    }
   }
 }
