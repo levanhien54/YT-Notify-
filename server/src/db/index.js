@@ -68,3 +68,14 @@ export function setChannelActive(db, channelId, active) {
 export function removeChannel(db, channelId) {
   db.prepare('DELETE FROM channels WHERE channel_id = ?').run(channelId);
 }
+
+export function updateChannelSubscription(db, channelId, { subscribedAt, leaseExpiresAt }) {
+  db.prepare(`
+    UPDATE channels SET subscribed_at = ?, lease_expires_at = ? WHERE channel_id = ?
+  `).run(subscribedAt, leaseExpiresAt, channelId);
+}
+
+export function updateLastVideoPublishedAt(db, channelId, publishedAt) {
+  db.prepare('UPDATE channels SET last_video_published_at = ? WHERE channel_id = ?')
+    .run(publishedAt, channelId);
+}
