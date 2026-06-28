@@ -24,12 +24,12 @@ function videoIdFromRef(ref) {
 }
 
 export function parseAtom(xml) {
-  if (!xml || !xml.trim()) return { entries: [], deleted: [] };
+  if (!xml || !xml.trim()) return { entries: [] };
   let doc;
   try {
     doc = parser.parse(xml);
   } catch {
-    return { entries: [], deleted: [] };
+    return { entries: [] };
   }
   const feed = doc && doc.feed ? doc.feed : {};
 
@@ -40,12 +40,18 @@ export function parseAtom(xml) {
     author: e.author ? text(e.author.name) : null,
     published: text(e.published),
     updated: text(e.updated),
+    isDeleted: false,
   }));
 
   const deleted = asArray(feed['deleted-entry']).map((d) => ({
     videoId: videoIdFromRef(d['@_ref']),
     channelId: null,
+    title: null,
+    author: null,
+    published: null,
+    updated: null,
+    isDeleted: true,
   }));
 
-  return { entries, deleted };
+  return { entries: entries.concat(deleted) };
 }

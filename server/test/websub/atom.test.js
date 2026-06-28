@@ -25,7 +25,6 @@ const DELETED_ENTRY = `<?xml version="1.0" encoding="UTF-8"?>
 describe('parseAtom', () => {
   it('parses a new/updated entry', () => {
     const res = parseAtom(NEW_ENTRY);
-    expect(res.deleted).toEqual([]);
     expect(res.entries).toHaveLength(1);
     expect(res.entries[0]).toEqual({
       videoId: 'VID123',
@@ -34,19 +33,27 @@ describe('parseAtom', () => {
       author: 'Cool Channel',
       published: '2026-06-28T10:00:00+00:00',
       updated: '2026-06-28T10:05:00+00:00',
+      isDeleted: false,
     });
   });
 
-  it('parses an at:deleted-entry into deleted[] with videoId from ref and channelId null', () => {
+  it('parses an at:deleted-entry into entries[] with isDeleted: true', () => {
     const res = parseAtom(DELETED_ENTRY);
-    expect(res.entries).toEqual([]);
-    expect(res.deleted).toHaveLength(1);
-    expect(res.deleted[0]).toEqual({ videoId: 'VIDDEL', channelId: null });
+    expect(res.entries).toHaveLength(1);
+    expect(res.entries[0]).toEqual({
+      videoId: 'VIDDEL',
+      channelId: null,
+      title: null,
+      author: null,
+      published: null,
+      updated: null,
+      isDeleted: true,
+    });
   });
 
-  it('returns empty arrays for an empty/invalid feed', () => {
+  it('returns empty entries array for an empty/invalid feed', () => {
     expect(parseAtom('<feed xmlns="http://www.w3.org/2005/Atom"></feed>'))
-      .toEqual({ entries: [], deleted: [] });
-    expect(parseAtom('')).toEqual({ entries: [], deleted: [] });
+      .toEqual({ entries: [] });
+    expect(parseAtom('')).toEqual({ entries: [] });
   });
 });
