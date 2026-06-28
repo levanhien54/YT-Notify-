@@ -1,0 +1,8 @@
+node_modules/
+downloads/
+*.sqlite
+*.sqlite3
+*.db
+server/bin/
+client/dist/
+.DS_Store
