@@ -51,8 +51,11 @@ export default function App() {
   }, [liveVideos, fetchedVideos]);
 
   const handleAdd = useCallback(async (input) => {
-    await api.addChannel(input);
-    await refreshChannels();
+    try {
+      await api.addChannel(input);
+    } finally {
+      await refreshChannels();
+    }
   }, [refreshChannels]);
 
   const handleToggle = useCallback(async (id, active) => {
