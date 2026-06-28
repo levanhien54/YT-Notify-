@@ -33,6 +33,9 @@ function waitForServer(port, maxMs = 20000) {
 
 async function startBackend() {
   const dbPath = path.join(app.getPath('userData'), 'yt-notify.db');
+  // Default download dir: Videos\YT-Notify (writable, user-friendly)
+  process.env.YT_DOWNLOAD_DIR = path.join(app.getPath('videos'), 'YT-Notify');
+
   const serverIndexPath = path.join(__dirname, '../server/src/index.js');
 
   const { start } = await import(pathToFileURL(serverIndexPath).href);

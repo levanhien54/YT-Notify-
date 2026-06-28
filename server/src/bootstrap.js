@@ -53,6 +53,7 @@ export function buildApp({
     leaseSeconds: config.leaseSeconds,
     fetchFn,
     preflight,
+    spawnFn,
   };
   const mgmtApp = createMgmtApp({ db, tunnel, queue, deps: mgmtDeps });
 

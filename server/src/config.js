@@ -3,7 +3,7 @@ import { getAllSettings } from './db/index.js';
 export const DEFAULTS = {
   webhook_port: 8787,
   mgmt_port: 5174,
-  download_dir: 'downloads',
+  download_dir: process.env.YT_DOWNLOAD_DIR || 'downloads',
   max_concurrency: 2,
   lease_seconds: 432000
 };
