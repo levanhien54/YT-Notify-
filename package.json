@@ -50,7 +50,10 @@
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "menuCategory": false,
+      "shortcutName": "YT-Notify Local Hub",
+      "runAfterFinish": false
     }
   }
 }
