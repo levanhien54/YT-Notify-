@@ -47,6 +47,13 @@ export class TunnelManager extends EventEmitter {
     }
   }
 
+  _onExit() {
+    this.child = null;
+    this.url = null;
+    this._buf = '';
+    this._setStatus('offline');
+  }
+
   start() {
     if (this.child) return;
     this._buf = '';
@@ -59,5 +66,6 @@ export class TunnelManager extends EventEmitter {
     const onData = (chunk) => this._handleData(chunk);
     if (this.child.stdout) this.child.stdout.on('data', onData);
     if (this.child.stderr) this.child.stderr.on('data', onData);
+    this.child.on('exit', () => this._onExit());
   }
 }
