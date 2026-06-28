@@ -4,6 +4,8 @@ import {
   listVideos,
   getChannel,
   addChannel,
+  setChannelActive,
+  removeChannel,
 } from './db/index.js';
 
 function countDownloading(db) {
@@ -29,6 +31,10 @@ function mapChannel(row) {
 
 export function registerMgmtRoutes(app, { db, tunnel, queue, deps }) {
   const genSecret = deps.genSecret || (() => randomBytes(16).toString('hex'));
+  const callbackFor = () => {
+    const baseUrl = tunnel.getUrl();
+    return baseUrl ? `${baseUrl}/webhook/youtube` : null;
+  };
 
   app.get('/api/status', (req, res) => {
     res.json({
@@ -62,8 +68,8 @@ export function registerMgmtRoutes(app, { db, tunnel, queue, deps }) {
       if (!input) {
         return res.status(400).json({ error: 'input is required' });
       }
-      const baseUrl = tunnel.getUrl();
-      if (!baseUrl) {
+      const callbackUrl = callbackFor();
+      if (!callbackUrl) {
         return res.status(503).json({ error: 'tunnel has no public url yet' });
       }
       const channelId = await deps.resolveChannelId(input, { spawnFn: deps.spawnFn });
@@ -71,7 +77,6 @@ export function registerMgmtRoutes(app, { db, tunnel, queue, deps }) {
         return res.status(409).json({ error: 'channel already exists' });
       }
       const secret = genSecret();
-      const callbackUrl = `${baseUrl}/webhook/youtube`;
       const channel = addChannel(db, {
         channelId,
         handle: input,
@@ -89,6 +94,53 @@ export function registerMgmtRoutes(app, { db, tunnel, queue, deps }) {
         fetchFn: deps.fetchFn,
       });
       res.json(mapChannel(channel));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.patch('/api/channels/:id', async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const existing = getChannel(db, id);
+      if (!existing) {
+        return res.status(404).json({ error: 'channel not found' });
+      }
+      const active = !!(req.body && req.body.active);
+      setChannelActive(db, id, active);
+      await deps.sendSubscription({
+        hubUrl: deps.hubUrl,
+        callbackUrl: callbackFor(),
+        channelId: id,
+        mode: active ? 'subscribe' : 'unsubscribe',
+        secret: existing.secret,
+        leaseSeconds: deps.leaseSeconds,
+        fetchFn: deps.fetchFn,
+      });
+      res.json(getChannel(db, id));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.delete('/api/channels/:id', async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const existing = getChannel(db, id);
+      if (!existing) {
+        return res.status(404).json({ error: 'channel not found' });
+      }
+      await deps.sendSubscription({
+        hubUrl: deps.hubUrl,
+        callbackUrl: callbackFor(),
+        channelId: id,
+        mode: 'unsubscribe',
+        secret: existing.secret,
+        leaseSeconds: deps.leaseSeconds,
+        fetchFn: deps.fetchFn,
+      });
+      removeChannel(db, id);
+      res.status(204).end();
     } catch (err) {
       next(err);
     }
