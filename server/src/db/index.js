@@ -38,3 +38,20 @@ export function initDb(filePath) {
   `);
   return db;
 }
+
+export function addChannel(db, { channelId, handle, title, thumbnail, secret }) {
+  const createdAt = Date.now();
+  db.prepare(`
+    INSERT INTO channels (channel_id, handle, title, thumbnail, active, secret, created_at)
+    VALUES (?, ?, ?, ?, 1, ?, ?)
+  `).run(channelId, handle, title, thumbnail, secret, createdAt);
+  return getChannel(db, channelId);
+}
+
+export function getChannel(db, channelId) {
+  return db.prepare('SELECT * FROM channels WHERE channel_id = ?').get(channelId);
+}
+
+export function listChannels(db) {
+  return db.prepare('SELECT * FROM channels ORDER BY created_at ASC').all();
+}
