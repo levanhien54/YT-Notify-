@@ -1,6 +1,7 @@
 // server/src/downloader/queue.js
 import { EventEmitter } from 'node:events';
 import { spawn } from 'node:child_process';
+import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { buildYtdlpArgs } from './args.js';
 import { parseProgress } from './progress.js';
@@ -54,6 +55,8 @@ export class DownloadQueue extends EventEmitter {
       outputTemplate,
       archivePath,
     });
+
+    try { mkdirSync(this.downloadDir, { recursive: true }); } catch {}
 
     updateVideoStatus(this.db, videoId, 'downloading');
     this.emit('start', { videoId });

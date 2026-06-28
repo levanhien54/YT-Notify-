@@ -28,9 +28,15 @@ export function useSocket() {
     socket.on('download:progress', ({ videoId, percent }) =>
       setProgress((prev) => ({ ...prev, [videoId]: percent }))
     );
-    socket.on('download:done', ({ videoId }) =>
-      setProgress((prev) => ({ ...prev, [videoId]: 100 }))
-    );
+    socket.on('download:done', ({ videoId }) => {
+      setProgress((prev) => ({ ...prev, [videoId]: 100 }));
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('YT-Notify — Download complete', {
+          body: `Video ${videoId} saved to your Videos folder.`,
+          silent: false,
+        });
+      }
+    });
     socket.on('download:failed', ({ videoId }) =>
       setProgress((prev) => {
         const next = { ...prev };

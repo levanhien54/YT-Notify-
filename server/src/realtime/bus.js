@@ -17,6 +17,7 @@ export function wireRealtime(io, emitters = {}) {
   }
 
   if (queue) {
+    queue.on('new', ({ video }) => io.emit('video:new', { video }));
     queue.on('start', ({ videoId }) => io.emit('download:start', { videoId }));
     queue.on('progress', ({ videoId, percent }) =>
       io.emit('download:progress', { videoId, percent })

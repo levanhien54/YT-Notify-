@@ -9,3 +9,4 @@ client/dist/
 dist/  
 dist2/  
 yt-notify.db*  
+dist-electron/

@@ -2,7 +2,7 @@ import http from 'node:http';
 import { spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { Server as IOServer } from 'socket.io';
-import { initDb } from './db/index.js';
+import { initDb, resetStuckDownloads } from './db/index.js';
 import { loadConfig } from './config.js';
 import { buildApp, HUB_URL } from './bootstrap.js';
 import { wireRealtime } from './realtime/bus.js';
@@ -13,6 +13,7 @@ const LEASE_INTERVAL_MS = 60 * 60 * 1000; // hourly
 
 export async function start({ dbPath = '../yt-notify.db', noExit = false } = {}) {
   const db = initDb(dbPath);
+  resetStuckDownloads(db); // recover videos interrupted by previous crash
   const config = loadConfig(db);
 
   const preflightState = [

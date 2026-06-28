@@ -38,7 +38,11 @@ export function buildApp({
   const tunnel = new TunnelManager({ port: config.webhookPort, spawnFn });
 
   const onNewVideo = (row) => {
-    if (row) queue.enqueue(row);
+    if (!row) return;
+    const ch = getChannel(db, row.channel_id);
+    if (ch && !ch.active) return; // channel is paused — skip download
+    queue.emit('new', { video: row });
+    queue.enqueue(row);
   };
   const onDeleted = handleDeleted(db);
 

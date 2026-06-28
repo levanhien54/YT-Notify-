@@ -40,11 +40,14 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    // Request desktop notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
     refreshChannels();
     refreshVideos();
     api.getSettings().then(setSettings);
-    // Kick off background refresh of channel names for any stale entries,
-    // then re-poll until titles are resolved (max ~10 seconds).
+    // Background-refresh stale channel names, then re-poll until resolved
     api.refreshChannelsMeta().then(() => {
       let tries = 0;
       const poll = setInterval(() => {
@@ -53,6 +56,14 @@ export default function App() {
       }, 2000);
     }).catch(() => {});
   }, [refreshChannels, refreshVideos]);
+
+  // Re-fetch video list while downloads are active so status updates appear
+  useEffect(() => {
+    const hasActive = Object.keys(progress).length > 0;
+    if (!hasActive) return;
+    const interval = setInterval(refreshVideos, 3000);
+    return () => clearInterval(interval);
+  }, [progress, refreshVideos]);
 
   const mergedVideos = useMemo(() => {
     const seen = new Set(liveVideos.map((v) => v.video_id));
@@ -154,7 +165,7 @@ export default function App() {
               <h2 className="mb-6 text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Video Feed
               </h2>
-              <VideoFeed videos={mergedVideos} progress={progress} />
+              <VideoFeed videos={mergedVideos} progress={progress} channels={channels} />
             </section>
           </div>
         </div>

@@ -74,6 +74,10 @@ export function updateChannelMeta(db, channelId, { title, thumbnail }) {
     .run(title ?? null, thumbnail ?? null, channelId);
 }
 
+export function resetStuckDownloads(db) {
+  db.prepare("UPDATE videos SET status = 'queued', retries = 0 WHERE status = 'downloading'").run();
+}
+
 export function updateChannelSubscription(db, channelId, { subscribedAt, leaseExpiresAt }) {
   db.prepare(`
     UPDATE channels SET subscribed_at = ?, lease_expires_at = ? WHERE channel_id = ?
