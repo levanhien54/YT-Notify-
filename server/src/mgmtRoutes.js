@@ -17,4 +17,14 @@ export function registerMgmtRoutes(app, { db, tunnel, queue, deps }) {
       preflight: deps.preflight || [],
     });
   });
+
+  app.post('/api/tunnel/start', (req, res) => {
+    tunnel.start();
+    res.status(202).end();
+  });
+
+  app.post('/api/tunnel/stop', (req, res) => {
+    tunnel.stop();
+    res.status(202).end();
+  });
 }
