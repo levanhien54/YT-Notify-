@@ -79,3 +79,30 @@ export function updateLastVideoPublishedAt(db, channelId, publishedAt) {
   db.prepare('UPDATE channels SET last_video_published_at = ? WHERE channel_id = ?')
     .run(publishedAt, channelId);
 }
+
+export function getVideo(db, videoId) {
+  return db.prepare('SELECT * FROM videos WHERE video_id = ?').get(videoId);
+}
+
+export function upsertVideoIfNew(db, { videoId, channelId, title, publishedAt, updatedAt, thumbnailUrl }) {
+  const existing = getVideo(db, videoId);
+  if (existing) {
+    db.prepare(`
+      UPDATE videos SET title = ?, updated_at = ?, thumbnail_url = ? WHERE video_id = ?
+    `).run(title, updatedAt, thumbnailUrl, videoId);
+    return { row: getVideo(db, videoId), isNew: false };
+  }
+  db.prepare(`
+    INSERT INTO videos
+      (video_id, channel_id, title, published_at, updated_at, thumbnail_url, status, retries, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, 'new', 0, ?)
+  `).run(videoId, channelId, title, publishedAt, updatedAt, thumbnailUrl, Date.now());
+  return { row: getVideo(db, videoId), isNew: true };
+}
+
+export function listVideos(db, { limit } = {}) {
+  if (limit != null) {
+    return db.prepare('SELECT * FROM videos ORDER BY published_at DESC LIMIT ?').all(limit);
+  }
+  return db.prepare('SELECT * FROM videos ORDER BY published_at DESC').all();
+}
