@@ -1,3 +1,6 @@
+import { parseAtom } from '../websub/atom.js';
+import { buildTopicUrl } from '../websub/topic.js';
+
 export function findMissedVideos(rssEntries, lastPublishedAt) {
   if (!Array.isArray(rssEntries) || rssEntries.length === 0) return [];
   const last = lastPublishedAt == null ? 0 : lastPublishedAt;
@@ -6,4 +9,12 @@ export function findMissedVideos(rssEntries, lastPublishedAt) {
     if (Number.isNaN(ts)) return false;
     return ts > last;
   });
+}
+
+export async function fetchChannelRss(channelId, fetchFn = fetch) {
+  const url = buildTopicUrl(channelId);
+  const res = await fetchFn(url);
+  if (!res.ok) return [];
+  const xml = await res.text();
+  return parseAtom(xml).entries;
 }
