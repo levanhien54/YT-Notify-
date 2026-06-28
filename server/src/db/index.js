@@ -121,3 +121,22 @@ export function incrementRetries(db, videoId) {
   db.prepare('UPDATE videos SET retries = retries + 1 WHERE video_id = ?').run(videoId);
   return getVideo(db, videoId).retries;
 }
+
+export function getSetting(db, key) {
+  const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
+  return row ? row.value : undefined;
+}
+
+export function setSetting(db, key, value) {
+  db.prepare(`
+    INSERT INTO settings (key, value) VALUES (?, ?)
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value
+  `).run(key, String(value));
+}
+
+export function getAllSettings(db) {
+  const rows = db.prepare('SELECT key, value FROM settings').all();
+  const out = {};
+  for (const r of rows) out[r.key] = r.value;
+  return out;
+}
