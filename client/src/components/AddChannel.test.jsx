@@ -8,7 +8,7 @@ describe('AddChannel', () => {
     render(<AddChannel onAdd={onAdd} />);
     const input = screen.getByPlaceholderText(/@handle/i);
     fireEvent.change(input, { target: { value: '  @cool  ' } });
-    fireEvent.click(screen.getByRole('button', { name: /add/i }));
+    fireEvent.click(screen.getByRole('button', { name: /subscribe/i }));
     expect(onAdd).toHaveBeenCalledWith('@cool');
     await waitFor(() => expect(input.value).toBe(''));
   });
@@ -17,7 +17,7 @@ describe('AddChannel', () => {
     const onAdd = vi.fn();
     render(<AddChannel onAdd={onAdd} />);
     fireEvent.change(screen.getByPlaceholderText(/@handle/i), { target: { value: '   ' } });
-    fireEvent.click(screen.getByRole('button', { name: /add/i }));
+    fireEvent.click(screen.getByRole('button', { name: /subscribe/i }));
     expect(onAdd).not.toHaveBeenCalled();
   });
 
@@ -26,7 +26,7 @@ describe('AddChannel', () => {
     const onAdd = vi.fn(() => new Promise((r) => { resolve = r; }));
     render(<AddChannel onAdd={onAdd} />);
     fireEvent.change(screen.getByPlaceholderText(/@handle/i), { target: { value: '@x' } });
-    const btn = screen.getByRole('button', { name: /add/i });
+    const btn = screen.getByRole('button', { name: /subscribe/i });
     fireEvent.click(btn);
     expect(btn).toBeDisabled();
     resolve({ channel_id: 'UCx' });

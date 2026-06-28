@@ -48,7 +48,7 @@ describe('App dashboard', () => {
     render(<App />);
     await screen.findByText('Alpha');
     fireEvent.change(screen.getByPlaceholderText(/@handle/i), { target: { value: '@new' } });
-    fireEvent.click(screen.getByRole('button', { name: /add/i }));
+    fireEvent.click(screen.getByRole('button', { name: /subscribe/i }));
     await waitFor(() => expect(api.addChannel).toHaveBeenCalledWith('@new'));
     await waitFor(() => expect(api.listChannels).toHaveBeenCalledTimes(2));
   });

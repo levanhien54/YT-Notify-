@@ -12,6 +12,24 @@ export default function App() {
   const [channels, setChannels] = useState([]);
   const [fetchedVideos, setFetchedVideos] = useState([]);
   const [settings, setSettings] = useState(null);
+  const [preflight, setPreflight] = useState(null);
+
+  useEffect(() => {
+    let timer;
+    const checkStatus = async () => {
+      try {
+        const data = await api.getStatus();
+        setPreflight(data.preflight);
+        if (data.preflight.some(b => !b.found && b.status !== 'ready')) {
+          timer = setTimeout(checkStatus, 1000);
+        }
+      } catch (err) {
+        timer = setTimeout(checkStatus, 1000);
+      }
+    };
+    checkStatus();
+    return () => clearTimeout(timer);
+  }, []);
 
   const refreshChannels = useCallback(async () => {
     setChannels(await api.listChannels());
@@ -51,29 +69,78 @@ export default function App() {
     setSettings(await api.patchSettings(patch));
   }, []);
 
+  const isLoadingBinaries = preflight && preflight.some(b => !b.found && b.status !== 'ready');
+
+  if (isLoadingBinaries) {
+    return (
+      <div className="min-h-screen bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-zinc-900 via-zinc-950 to-black flex items-center justify-center font-sans">
+        <div className="text-center space-y-4 max-w-md w-full px-4">
+          <h2 className="text-2xl font-bold text-white mb-6">Downloading Dependencies</h2>
+          {preflight.map(b => (
+            <div key={b.name} className="bg-white/10 border border-white/20 rounded-xl p-4 flex justify-between items-center shadow-lg backdrop-blur-md">
+              <span className="text-slate-200 font-mono text-sm">{b.name}</span>
+              <span className={`text-xs font-bold uppercase tracking-wider ${b.status === 'ready' || b.found ? 'text-emerald-400' : 'text-amber-400 animate-pulse'}`}>
+                {b.found || b.status === 'ready' ? 'Ready' : b.status}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
-      <h1 className="text-xl font-bold">YT-Notify Local Hub</h1>
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-zinc-900 via-zinc-950 to-black py-8 px-4 sm:px-8 font-sans">
+      <div className="mx-auto max-w-6xl">
+        {/* Header */}
+        <header className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-white bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">
+              YT-Notify <span className="font-light text-slate-400">Hub</span>
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">Local YouTube WebSub & Download Manager</p>
+          </div>
+          <StatusBar tunnel={tunnel} onStart={api.startTunnel} onStop={api.stopTunnel} />
+        </header>
 
-      <StatusBar tunnel={tunnel} onStart={api.startTunnel} onStop={api.stopTunnel} />
+        {/* Main Grid Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* Left Column (Sidebar) */}
+          <div className="lg:col-span-4 space-y-6">
+            {/* Channels Panel */}
+            <section className="rounded-2xl border border-white/5 bg-white/5 p-5 backdrop-blur-xl shadow-2xl">
+              <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-rose-500"></span> Subscriptions
+              </h2>
+              <AddChannel onAdd={handleAdd} />
+              <div className="mt-6">
+                <ChannelList channels={channels} onToggle={handleToggle} onRemove={handleRemove} />
+              </div>
+            </section>
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase text-slate-500">Channels</h2>
-        <AddChannel onAdd={handleAdd} />
-        <ChannelList channels={channels} onToggle={handleToggle} onRemove={handleRemove} />
-      </section>
+            {/* Settings Panel */}
+            {settings && (
+              <section className="rounded-2xl border border-white/5 bg-white/5 p-5 backdrop-blur-xl shadow-2xl">
+                <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-indigo-500"></span> Settings
+                </h2>
+                <Settings settings={settings} onSave={handleSaveSettings} />
+              </section>
+            )}
+          </div>
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase text-slate-500">Feed</h2>
-        <VideoFeed videos={mergedVideos} progress={progress} />
-      </section>
-
-      {settings && (
-        <section className="space-y-3">
-          <h2 className="text-sm font-semibold uppercase text-slate-500">Settings</h2>
-          <Settings settings={settings} onSave={handleSaveSettings} />
-        </section>
-      )}
+          {/* Right Column (Feed) */}
+          <div className="lg:col-span-8 space-y-6">
+            <section className="rounded-2xl border border-white/5 bg-white/5 p-6 backdrop-blur-xl shadow-2xl min-h-[600px]">
+              <h2 className="mb-6 text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Video Feed
+              </h2>
+              <VideoFeed videos={mergedVideos} progress={progress} />
+            </section>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

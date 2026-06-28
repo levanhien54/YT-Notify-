@@ -6,3 +6,6 @@ downloads/
 server/bin/
 client/dist/
 .DS_Store
+dist/  
+dist2/  
+yt-notify.db*  

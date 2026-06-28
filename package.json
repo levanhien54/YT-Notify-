@@ -1,0 +1,44 @@
+{
+  "name": "yt-notify-local-hub",
+  "version": "1.0.0",
+  "description": "YouTube Webhook Notification and Video Downloader",
+  "main": "electron/main.js",
+  "type": "module",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "express": "^4.19.2",
+    "fast-xml-parser": "^4.4.1",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.sonson.ytnotify",
+    "productName": "YT-Notify Local Hub",
+    "directories": {
+      "output": "dist2"
+    },
+    "files": [
+      "electron/**/*",
+      "server/**/*",
+      "!server/node_modules/**/*",
+      "client/dist/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

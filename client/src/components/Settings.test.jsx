@@ -13,7 +13,7 @@ const settings = {
 describe('Settings', () => {
   it('renders editable download_dir and max_concurrency fields', () => {
     render(<Settings settings={settings} onSave={() => {}} />);
-    expect(screen.getByLabelText(/download dir/i)).toHaveValue('downloads');
+    expect(screen.getByLabelText(/download/i)).toHaveValue('downloads');
     expect(screen.getByLabelText(/concurrency/i)).toHaveValue('2');
   });
 
@@ -27,7 +27,7 @@ describe('Settings', () => {
   it('saves the edited values', async () => {
     const onSave = vi.fn().mockResolvedValue({});
     render(<Settings settings={settings} onSave={onSave} />);
-    fireEvent.change(screen.getByLabelText(/download dir/i), { target: { value: 'D:/yt' } });
+    fireEvent.change(screen.getByLabelText(/download/i), { target: { value: 'D:/yt' } });
     fireEvent.change(screen.getByLabelText(/concurrency/i), { target: { value: '4' } });
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() =>
@@ -50,7 +50,7 @@ describe('Settings', () => {
     const onSave = vi.fn().mockResolvedValue({});
     render(<Settings settings={settings} onSave={onSave} />);
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => expect(screen.getByText('Saved')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Settings saved successfully.')).toBeInTheDocument());
   });
 
   it('shows error message on save failure', async () => {

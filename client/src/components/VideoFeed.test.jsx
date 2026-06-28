@@ -26,8 +26,8 @@ describe('VideoFeed', () => {
     render(<VideoFeed videos={videos} progress={{ vid2: 73 }} />);
     const card = screen.getByText('Second').closest('article');
     const bar = within(card).getByRole('progressbar');
-    expect(bar.value).toBe(73);
-    expect(bar.max).toBe(100);
+    expect(bar.getAttribute('aria-valuenow')).toBe('73');
+    expect(bar.getAttribute('aria-valuemax')).toBe('100');
   });
 
   it('shows an empty state with no videos', () => {

@@ -21,7 +21,7 @@ describe('StatusBar', () => {
         onStop={onStop}
       />
     );
-    expect(screen.getByText('https://x.trycloudflare.com')).toBeInTheDocument();
+    expect(screen.getByText('x.trycloudflare.com')).toBeInTheDocument();
     const btn = screen.getByRole('button', { name: /stop/i });
     fireEvent.click(btn);
     expect(onStop).toHaveBeenCalledTimes(1);
