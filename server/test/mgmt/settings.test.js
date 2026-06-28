@@ -25,17 +25,17 @@ describe('GET /api/settings', () => {
     const app = makeApp(db);
     const res = await request(app).get('/api/settings');
     expect(res.status).toBe(200);
-    expect(res.body.maxConcurrency).toBe(DEFAULTS.maxConcurrency);
-    expect(res.body.downloadDir).toBe(DEFAULTS.downloadDir);
+    expect(res.body.max_concurrency).toBe(DEFAULTS.max_concurrency);
+    expect(res.body.download_dir).toBe(DEFAULTS.download_dir);
   });
 
   it('merges stored values over DEFAULTS', async () => {
-    setSetting(db, 'maxConcurrency', '5');
+    setSetting(db, 'max_concurrency', '5');
     const app = makeApp(db);
     const res = await request(app).get('/api/settings');
     expect(res.status).toBe(200);
-    expect(res.body.maxConcurrency).toBe('5');
-    expect(res.body.webhookPort).toBe(DEFAULTS.webhookPort);
+    expect(res.body.max_concurrency).toBe('5');
+    expect(res.body.webhook_port).toBe(DEFAULTS.webhook_port);
   });
 });
 
@@ -47,16 +47,16 @@ describe('PATCH /api/settings', () => {
     const app = makeApp(db);
     const res = await request(app)
       .patch('/api/settings')
-      .send({ maxConcurrency: '4', downloadDir: '/data/dl' });
+      .send({ max_concurrency: '4', download_dir: '/data/dl' });
     expect(res.status).toBe(200);
-    expect(res.body.maxConcurrency).toBe('4');
-    expect(res.body.downloadDir).toBe('/data/dl');
+    expect(res.body.max_concurrency).toBe('4');
+    expect(res.body.download_dir).toBe('/data/dl');
     // unspecified keys still default
-    expect(res.body.leaseSeconds).toBe(DEFAULTS.leaseSeconds);
+    expect(res.body.lease_seconds).toBe(DEFAULTS.lease_seconds);
 
     // persisted across a fresh request
     const res2 = await request(app).get('/api/settings');
-    expect(res2.body.maxConcurrency).toBe('4');
-    expect(res2.body.downloadDir).toBe('/data/dl');
+    expect(res2.body.max_concurrency).toBe('4');
+    expect(res2.body.download_dir).toBe('/data/dl');
   });
 });

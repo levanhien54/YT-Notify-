@@ -137,7 +137,7 @@ export function registerMgmtRoutes(app, { db, tunnel, queue, deps }) {
         leaseSeconds: deps.leaseSeconds,
         fetchFn: deps.fetchFn,
       });
-      res.json(getChannel(db, id));
+      res.json(mapChannel(getChannel(db, id)));
     } catch (err) {
       next(err);
     }

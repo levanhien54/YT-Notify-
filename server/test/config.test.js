@@ -5,17 +5,23 @@ import { DEFAULTS, loadConfig } from '../src/config.js';
 describe('config', () => {
   it('exposes the locked DEFAULTS', () => {
     expect(DEFAULTS).toEqual({
+      webhook_port: 8787,
+      mgmt_port: 5174,
+      download_dir: 'downloads',
+      max_concurrency: 2,
+      lease_seconds: 432000
+    });
+  });
+
+  it('loadConfig returns DEFAULTS when settings table is empty', () => {
+    const db = initDb(':memory:');
+    expect(loadConfig(db)).toEqual({
       webhookPort: 8787,
       mgmtPort: 5174,
       downloadDir: 'downloads',
       maxConcurrency: 2,
       leaseSeconds: 432000
     });
-  });
-
-  it('loadConfig returns DEFAULTS when settings table is empty', () => {
-    const db = initDb(':memory:');
-    expect(loadConfig(db)).toEqual(DEFAULTS);
   });
 
   it('loadConfig overrides defaults from settings and coerces numbers', () => {
