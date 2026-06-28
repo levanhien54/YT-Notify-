@@ -53,6 +53,7 @@ describe('WebSub end-to-end flow', () => {
     const videos = listVideos(db, { limit: 10 });
     expect(videos).toHaveLength(1);
     expect(videos[0].video_id).toBe('E2EVID');
+    expect(videos[0].status).toBe('new');
 
     // 3) A POST signed with the WRONG secret is rejected.
     const badRes = await request(app)
@@ -61,5 +62,17 @@ describe('WebSub end-to-end flow', () => {
       .set('X-Hub-Signature', sign(XML, 'nope'))
       .send(XML);
     expect(badRes.status).toBe(403);
+
+    // 4) Sending the same valid signed POST again is deduplicated.
+    const dupRes = await request(app)
+      .post('/webhook/youtube')
+      .set('Content-Type', 'application/atom+xml')
+      .set('X-Hub-Signature', sign(XML, SECRET))
+      .send(XML);
+    expect(dupRes.status).toBe(204);
+    await new Promise((r) => setImmediate(r));
+
+    const videosAfterDup = listVideos(db, { limit: 10 });
+    expect(videosAfterDup).toHaveLength(1);
   });
 });
