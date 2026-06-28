@@ -106,3 +106,18 @@ export function listVideos(db, { limit } = {}) {
   }
   return db.prepare('SELECT * FROM videos ORDER BY published_at DESC').all();
 }
+
+export function updateVideoStatus(db, videoId, status, { downloadPath, error } = {}) {
+  db.prepare(`
+    UPDATE videos
+       SET status = ?,
+           download_path = COALESCE(?, download_path),
+           error = COALESCE(?, error)
+     WHERE video_id = ?
+  `).run(status, downloadPath ?? null, error ?? null, videoId);
+}
+
+export function incrementRetries(db, videoId) {
+  db.prepare('UPDATE videos SET retries = retries + 1 WHERE video_id = ?').run(videoId);
+  return getVideo(db, videoId).retries;
+}
