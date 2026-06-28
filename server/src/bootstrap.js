@@ -8,6 +8,7 @@ import { createMgmtApp } from './mgmtApp.js';
 import { resubscribeAll, sendSubscription } from './websub/client.js';
 import { resolveChannelId } from './downloader/resolver.js';
 import { handleDeleted } from './websub/onDeleted.js';
+import { runCatchup } from './scheduler/runCatchup.js';
 
 export const HUB_URL = 'https://pubsubhubbub.appspot.com/subscribe';
 
@@ -19,6 +20,7 @@ export function buildApp({
   resubscribeFn = resubscribeAll,
   resolveFn = resolveChannelId,
   sendSubscriptionFn = sendSubscription,
+  catchupFn = runCatchup,
   preflight = [],
 }) {
   const secretFor = (channelId) => {
@@ -65,6 +67,18 @@ export function buildApp({
     });
   }
 
+  let wasOnline = false;
+  function wireReconnectCatchup() {
+    tunnel.on('status', (status) => {
+      if (status === 'online' && !wasOnline) {
+        wasOnline = true;
+        Promise.resolve(catchupFn({ db, onNewVideo, fetchFn })).catch(() => {});
+      } else if (status !== 'online') {
+        wasOnline = false;
+      }
+    });
+  }
+
   return {
     db,
     config,
@@ -77,5 +91,6 @@ export function buildApp({
     onNewVideo,
     onDeleted,
     wireTunnelResubscribe,
+    wireReconnectCatchup,
   };
 }
