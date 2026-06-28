@@ -12,9 +12,13 @@ export function findMissedVideos(rssEntries, lastPublishedAt) {
 }
 
 export async function fetchChannelRss(channelId, fetchFn = fetch) {
-  const url = buildTopicUrl(channelId);
-  const res = await fetchFn(url);
-  if (!res.ok) return [];
-  const xml = await res.text();
-  return parseAtom(xml).entries;
+  try {
+    const url = buildTopicUrl(channelId);
+    const res = await fetchFn(url);
+    if (!res.ok) return { entries: [], deleted: [] };
+    const xml = await res.text();
+    return parseAtom(xml);
+  } catch {
+    return { entries: [], deleted: [] };
+  }
 }
