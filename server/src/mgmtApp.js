@@ -14,7 +14,7 @@ export function createMgmtApp({ db, tunnel, queue, deps = {} }) {
 
   registerMgmtRoutes(app, { db, tunnel, queue, deps });
 
-  const clientDist = path.resolve(__dirname, '../client/dist');
+  const clientDist = path.resolve(__dirname, '../../client/dist');
   if (fs.existsSync(clientDist)) {
     app.use(express.static(clientDist));
     app.get(/^(?!\/api\/).*/, (req, res) => {
