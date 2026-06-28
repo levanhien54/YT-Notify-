@@ -114,7 +114,13 @@ export default function App() {
             {/* Channels Panel */}
             <section className="rounded-2xl border border-white/5 bg-white/5 p-5 backdrop-blur-xl shadow-2xl">
               <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-rose-500"></span> Subscriptions
+                <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                Subscriptions
+                {channels.length > 0 && (
+                  <span className="ml-auto text-xs font-semibold bg-white/10 text-slate-300 px-2 py-0.5 rounded-full">
+                    {channels.length}
+                  </span>
+                )}
               </h2>
               <AddChannel onAdd={handleAdd} />
               <div className="mt-6">
