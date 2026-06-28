@@ -6,8 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "electron .",
-    "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "build:client": "cd client && npm run build",
+    "dist:win": "npm run build:client && electron-builder --win --publish never",
+    "pack": "electron-builder --dir --publish never"
   },
   "dependencies": {
     "better-sqlite3": "^11.3.0",
@@ -20,25 +21,33 @@
     "electron-builder": "^24.13.3"
   },
   "build": {
-    "appId": "com.sonson.ytnotify",
+    "appId": "com.levanhien54.yt-notify-local-hub",
     "productName": "YT-Notify Local Hub",
+    "asar": false,
     "directories": {
-      "output": "dist2"
+      "output": "dist-electron"
     },
     "files": [
       "electron/**/*",
-      "server/**/*",
-      "!server/node_modules/**/*",
+      "server/src/**/*",
+      "server/package.json",
+      "server/node_modules/**/*",
+      "!server/node_modules/better-sqlite3/**/*",
+      "!server/node_modules/.cache/**/*",
+      "!**/*.test.js",
+      "!**/test/**/*",
       "client/dist/**/*"
     ],
     "win": {
-      "target": [
-        "nsis"
-      ]
+      "target": ["nsis"],
+      "requestedExecutionLevel": "asInvoker"
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     }
   }
 }

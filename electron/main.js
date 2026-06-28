@@ -1,18 +1,54 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, shell, dialog } from 'electron';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import http from 'node:http';
 
-// Convert import.meta.url for __dirname in ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-let mainWindow;
-let serverInstance;
+const MGMT_PORT = 5174;
+let mainWindow = null;
+let shutdownFn = null;
 
-async function createWindow() {
+function waitForServer(port, maxMs = 20000) {
+  return new Promise((resolve, reject) => {
+    const started = Date.now();
+    const check = () => {
+      const req = http.get(`http://127.0.0.1:${port}/api/status`, (res) => {
+        res.resume();
+        resolve();
+      });
+      req.on('error', () => {
+        if (Date.now() - started > maxMs) {
+          reject(new Error(`Server not ready after ${maxMs}ms`));
+        } else {
+          setTimeout(check, 600);
+        }
+      });
+      req.end();
+    };
+    setTimeout(check, 800);
+  });
+}
+
+async function startBackend() {
+  const dbPath = path.join(app.getPath('userData'), 'yt-notify.db');
+  const serverIndexPath = path.join(__dirname, '../server/src/index.js');
+
+  const { start } = await import(pathToFileURL(serverIndexPath).href);
+  const { shutdown } = await start({ dbPath, noExit: true });
+  shutdownFn = shutdown;
+
+  await waitForServer(MGMT_PORT);
+}
+
+function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1200,
+    width: 1280,
     height: 800,
+    minWidth: 900,
+    minHeight: 600,
+    title: 'YT-Notify Local Hub',
     autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: false,
@@ -20,39 +56,37 @@ async function createWindow() {
     },
   });
 
-  try {
-    // 1. Boot up the backend server
-    const { start } = await import('../server/src/index.js');
-    
-    // The database should be stored in the app's UserData folder so it's writable
-    const dbPath = path.join(app.getPath('userData'), 'yt-notify.db');
-    console.log('[electron] Starting server with dbPath:', dbPath);
-    
-    // We pass dbPath. The server handles starting Express on 5174 (default mgmt port)
-    // We should also override the mgmtPort in case 5174 is taken, but for now we rely on config.
-    // The server returns mgmtServer. We can get the port from it.
-    const { mgmtServer } = await start({ dbPath });
-    
-    const port = mgmtServer.address().port;
-    console.log(`[electron] Server started, loading UI from port ${port}...`);
+  mainWindow.loadURL(`http://127.0.0.1:${MGMT_PORT}`);
 
-    // 2. Load the UI from the local Express server
-    mainWindow.loadURL(`http://127.0.0.1:${port}`);
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: 'deny' };
+  });
 
-  } catch (err) {
-    console.error('[electron] Failed to start server:', err);
-    // Optionally load an error page or show an alert here
-  }
+  mainWindow.on('closed', () => { mainWindow = null; });
 }
 
-app.whenReady().then(() => {
-  createWindow();
-
-  app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
+app.whenReady().then(async () => {
+  try {
+    await startBackend();
+    createWindow();
+  } catch (err) {
+    console.error('[electron] Startup error:', err);
+    dialog.showErrorBox(
+      'YT-Notify Local Hub — Startup Error',
+      `Failed to start the backend server:\n\n${err.message}\n\nCheck that all dependencies are installed.`
+    );
+    app.quit();
+  }
 });
 
-app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') app.quit();
+app.on('before-quit', () => {
+  if (shutdownFn) {
+    try { shutdownFn(); } catch {}
+    shutdownFn = null;
+  }
+});
+
+app.on('window-all-closed', () => {
+  app.quit();
 });

@@ -11,7 +11,7 @@ import { ensureBinaries } from './util/binaries.js';
 
 const LEASE_INTERVAL_MS = 60 * 60 * 1000; // hourly
 
-export async function start({ dbPath = '../yt-notify.db' } = {}) {
+export async function start({ dbPath = '../yt-notify.db', noExit = false } = {}) {
   const db = initDb(dbPath);
   const config = loadConfig(db);
 
@@ -86,10 +86,12 @@ export async function start({ dbPath = '../yt-notify.db' } = {}) {
     webhookServer.close();
     mgmtServer.close();
     io.close();
-    process.exit(0);
+    if (!noExit) process.exit(0);
   }
-  process.on('SIGINT', shutdown);
-  process.on('SIGTERM', shutdown);
+  if (!noExit) {
+    process.on('SIGINT', shutdown);
+    process.on('SIGTERM', shutdown);
+  }
 
   return { app, webhookServer, mgmtServer, io, shutdown };
 }
