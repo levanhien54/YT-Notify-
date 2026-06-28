@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Save } from 'lucide-react';
+import { Save, ChevronDown, ChevronRight } from 'lucide-react';
 
 export default function Settings({ settings, onSave }) {
   const [downloadDir, setDownloadDir] = useState(settings?.download_dir ?? '');
   const [maxConcurrency, setMaxConcurrency] = useState(settings?.max_concurrency ?? '');
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Auto-hide feedback after 3 seconds
   useEffect(() => {
@@ -41,17 +42,6 @@ export default function Settings({ settings, onSave }) {
 
   return (
     <form onSubmit={save} className="grid gap-4">
-      {/* Read-only fields */}
-      <div className="grid grid-cols-2 gap-4">
-        <ReadOnlyField label="Webhook Port" value={settings?.webhook_port} />
-        <ReadOnlyField label="Mgmt Port" value={settings?.mgmt_port} />
-        <div className="col-span-2">
-          <ReadOnlyField label="Lease Duration (sec)" value={settings?.lease_seconds} />
-        </div>
-      </div>
-
-      <div className="h-px w-full bg-white/5 my-2"></div>
-
       {/* Editable fields */}
       <label className="grid gap-1.5 text-sm">
         <span className="font-medium text-slate-300">Download Directory</span>
@@ -70,6 +60,26 @@ export default function Settings({ settings, onSave }) {
           className="rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
         />
       </label>
+
+      {/* Advanced (read-only) toggle */}
+      <button
+        type="button"
+        onClick={() => setShowAdvanced(v => !v)}
+        className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-400 transition-colors w-fit"
+      >
+        {showAdvanced ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+        Advanced
+      </button>
+
+      {showAdvanced && (
+        <div className="grid grid-cols-2 gap-3 rounded-xl border border-white/5 bg-black/20 p-3">
+          <ReadOnlyField label="Webhook Port" value={settings?.webhook_port} />
+          <ReadOnlyField label="Mgmt Port" value={settings?.mgmt_port} />
+          <div className="col-span-2">
+            <ReadOnlyField label="Lease Duration (sec)" value={settings?.lease_seconds} />
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center justify-between mt-2">
         <button
