@@ -1,7 +1,7 @@
 import express from 'express';
 import { verifyHmac } from './hmac.js';
 import { parseAtom } from './atom.js';
-import { upsertVideoIfNew, getVideo } from '../db/index.js';
+import { upsertVideoIfNew, getVideo, updateLastVideoPublishedAt } from '../db/index.js';
 
 export function registerWebhookRoutes(app, { db, secretFor, onNewVideo, onDeleted }) {
   // GET: WebSub verification handshake -> echo hub.challenge.
@@ -47,8 +47,11 @@ export function registerWebhookRoutes(app, { db, secretFor, onNewVideo, onDelete
         updatedAt: entry.updated ? Date.parse(entry.updated) : null,
         thumbnailUrl: `https://i.ytimg.com/vi/${entry.videoId}/hqdefault.jpg`,
       });
-      if (isNew && typeof onNewVideo === 'function') {
-        Promise.resolve().then(() => onNewVideo(row));
+      if (isNew) {
+        updateLastVideoPublishedAt(db, entry.channelId, Date.parse(entry.published));
+        if (typeof onNewVideo === 'function') {
+          Promise.resolve().then(() => onNewVideo(row));
+        }
       }
     }
 

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import crypto from 'node:crypto';
 import request from 'supertest';
-import { initDb, addChannel, listVideos } from '../../src/db/index.js';
+import { initDb, addChannel, listVideos, getChannel } from '../../src/db/index.js';
 import { createWebhookApp } from '../../src/webhookApp.js';
 
 const SECRET = 'chan-secret';
@@ -62,6 +62,10 @@ describe('POST /webhook/youtube dedup + callbacks', () => {
     expect(listVideos(db, { limit: 100 })).toHaveLength(1);
     expect(onNewVideo).toHaveBeenCalledTimes(1);
     expect(onNewVideo.mock.calls[0][0].video_id).toBe('DUPVID');
+
+    // Verify that last_video_published_at was updated
+    const channel = getChannel(db, 'UCdup');
+    expect(channel.last_video_published_at).toBe(Date.parse('2026-06-28T10:00:00+00:00'));
 
     // Metadata-only update for the SAME videoId -> still one video, no new onNewVideo
     const r2 = await post(app, UPDATE_XML);
