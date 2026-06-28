@@ -17,6 +17,13 @@ describe('Settings', () => {
     expect(screen.getByLabelText(/concurrency/i)).toHaveValue('2');
   });
 
+  it('renders read-only fields: webhook_port, mgmt_port, lease_seconds', () => {
+    render(<Settings settings={settings} onSave={() => {}} />);
+    expect(screen.getByText('8787')).toBeInTheDocument();
+    expect(screen.getByText('5174')).toBeInTheDocument();
+    expect(screen.getByText('432000')).toBeInTheDocument();
+  });
+
   it('saves the edited values', async () => {
     const onSave = vi.fn().mockResolvedValue({});
     render(<Settings settings={settings} onSave={onSave} />);
@@ -37,5 +44,19 @@ describe('Settings', () => {
     expect(btn).toBeDisabled();
     resolve({});
     await waitFor(() => expect(btn).not.toBeDisabled());
+  });
+
+  it('shows "Saved" feedback after successful save', async () => {
+    const onSave = vi.fn().mockResolvedValue({});
+    render(<Settings settings={settings} onSave={onSave} />);
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => expect(screen.getByText('Saved')).toBeInTheDocument());
+  });
+
+  it('shows error message on save failure', async () => {
+    const onSave = vi.fn().mockRejectedValue(new Error('Network error'));
+    render(<Settings settings={settings} onSave={onSave} />);
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => expect(screen.getByText('Network error')).toBeInTheDocument());
   });
 });
